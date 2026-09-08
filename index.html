@@ -148,8 +148,8 @@ html,body{background:#071446}body:before{background:radial-gradient(circle at 50
 .rotate-hint small{color:#ffbf3f;font-size:.7rem;letter-spacing:.14em}
 @media(orientation:portrait) and (max-width:600px){.rotate-hint{display:flex}}
 
-/* ===== Teléfono en HORIZONTAL: HUD para pantalla ancha y baja ===== */
-@media(orientation:landscape) and (max-height:600px){
+/* ===== Teléfono/tablet en HORIZONTAL: HUD para pantalla ancha ===== */
+@media (orientation:landscape) and (max-height:600px), (orientation:landscape) and (pointer:coarse) and (max-height:1200px){
   .app{padding:5px}
   .top{height:40px;flex:0 0 auto}
   .brand h1{font-size:.72rem;line-height:1}.brand p{display:none}
@@ -162,12 +162,13 @@ html,body{background:#071446}body:before{background:radial-gradient(circle at 50
   .roomhead{top:5px;left:5px;padding:5px 8px;max-width:38%}
   .roomhead b{font-size:.76rem;line-height:1.05}.roomhead small{font-size:.42rem}
   .hintband{display:none}
-  .feedback{top:44px;font-size:.62rem;width:min(78%,380px);padding:7px 11px}
+  .feedback{top:52px;font-size:.62rem;width:min(80%,420px);padding:7px 11px;opacity:0}
+  .feedback.show{opacity:1}
   /* Panel de misión → esquina superior derecha, angosto, sin tapar el centro */
-  #room1 .mission,#room3 .mission,#room4 .mission{left:auto;right:6px;top:5px;bottom:auto;width:auto;max-width:44%;padding:5px 9px;text-align:center}
-  #room1 .mission p,#room3 .mission p,#room4 .mission p{display:none}
-  #room1 .mission b,#room3 .mission b,#room4 .mission b{font-size:.66rem}
-  #room1 .mission .progress,#room3 .mission .progress,#room4 .mission .progress{margin-top:5px}
+  .mission{left:auto;right:6px;top:5px;bottom:auto;width:auto;max-width:46%;padding:5px 9px;text-align:center}
+  .mission p{display:none}
+  .mission b{font-size:.66rem}
+  .mission .progress{margin-top:5px}
   #room1 .inventory{gap:4px;margin-top:6px}
   #room1 .inventory .slot{min-width:50px;padding:3px 5px}
   #room1 .inventory .slot b{font-size:.72rem}#room1 .inventory .slot i{font-size:.4rem}
@@ -184,8 +185,9 @@ html,body{background:#071446}body:before{background:radial-gradient(circle at 50
   .aimstats{left:8px;bottom:8px}
   .meter{padding:5px 8px;font-size:.58rem}.meter b{font-size:.85rem}
   .crosshair{width:28px;height:28px}
-  /* Modales compactos con scroll (el .overlay ya tiene overflow:auto) */
-  .modal{padding:14px 16px}
+  /* Modales compactos: anclados arriba y con scroll (no se corta el título) */
+  .overlay{align-items:flex-start;padding:10px 12px}
+  .modal{margin:0 auto;padding:14px 16px}
   .modal h2{font-size:clamp(1.1rem,4.5vw,1.7rem);margin:6px 0}
   .modal p{margin:0 auto 10px;font-size:.82rem}
   .badge{font-size:.56rem}
@@ -675,7 +677,7 @@ function shoot(e){
       let acc=shotsFired?Math.round(shotsHit/shotsFired*100):100;
       runStats.acc=acc;
       if(acc>=90)score+=120;
-      setTimeout(()=>goRoom(3,'BASE DEPURADA','Errores restantes: <b>0</b>. Precisión: <b>'+acc+'%</b>'+(acc>=90?' · +120 bonus':'')+'. Validar los datos automáticamente evita cobros y envíos equivocados. <b>Fragmento: 0</b>.',initPlatformer),450);
+      setTimeout(()=>goRoom(3,'BASE DEPURADA','Errores restantes: <b>0</b>. Precisión: <b>'+acc+'%</b>'+(acc>=90?' · +120 bonus':'')+'. Validar los datos automáticamente evita cobros y envíos equivocados. <b>Fragmento recuperado: 0</b>.',initPlatformer),450);
     }
   }else{
     comboCount=0;lives--;sfx('miss');
