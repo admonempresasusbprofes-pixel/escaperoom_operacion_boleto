@@ -262,6 +262,12 @@ html,body{background:#071446}body:before{background:radial-gradient(circle at 50
 /* flecha entre casillas del flujo final → se lee como secuencia */
 .flow-slot:not(:last-of-type):after{content:"→";position:absolute;right:-11px;top:50%;transform:translateY(-50%);color:#7d8dc7;font-weight:900;font-size:.9rem;z-index:2}
 .flow-slot.start-hint{border-color:var(--gold);box-shadow:0 0 0 2px #ffbf3f55}
+/* Nota de carrera en las tarjetas de instrucciones */
+.brief-prog{text-align:left;margin:8px 0 2px;padding:8px 11px;border-left:3px solid var(--gold);background:#ffd15c12;border-radius:0 9px 9px 0;font-size:.78rem;color:#cfe0ee;line-height:1.42}
+.brief-prog b{color:var(--gold);letter-spacing:.01em}
+@media (orientation:landscape) and (max-height:600px), (orientation:landscape) and (pointer:coarse) and (max-height:1200px){
+  .brief-prog{margin:5px 0 1px;padding:5px 9px;font-size:.62rem;line-height:1.3}
+}
 /* Puerta final compacta en horizontal (debe caber sin scroll) — va DESPUÉS de las
    reglas base de .flow-* para ganar por orden de cascada */
 @media (orientation:landscape) and (max-height:600px), (orientation:landscape) and (pointer:coarse) and (max-height:1200px){
@@ -492,22 +498,26 @@ const ROOM_BRIEF={
   1:{t:'FASE 1 · DETECTAR',h:'La oficina manual',b:'Las solicitudes de clientes se anotaban a mano y varias no quedaron registradas antes del cierre.',steps:[
      'Mueve la <b>linterna</b> por el escritorio y toca los <b>3 objetos con pista</b>.',
      'Cada pista te da un dato: solicitudes <b>recibidas</b>, <b>registradas</b> y la <b>hora de cierre</b>.',
-     'Abre el <b>CAJÓN</b> y escribe cuántas solicitudes quedaron <b>sin registrar</b> (recibidas − registradas).']},
+     'Abre el <b>CAJÓN</b> y escribe cuántas solicitudes quedaron <b>sin registrar</b> (recibidas − registradas).'],
+     prog:{p:'Contaduría Pública',d:'Comparar lo que entró con lo que quedó registrado es una <b>conciliación</b>: el día a día de la contabilidad y las finanzas.'}},
   2:{t:'FASE 2 · VALIDAR',h:'Depurar la base de datos',b:'La base quedó con registros con error mezclados entre los correctos.',
      legend:[{i:'◆',t:'no tocar',c:'mint'},{i:'▲ ■ ●',t:'eliminar',c:'red'},{i:'◷',t:'cámara lenta',c:'gold'}],steps:[
      '<b>Toca los registros con error</b> (▲ ■ ● ✦ ⬟) para eliminarlos.',
      '<b>No toques los válidos</b> ◆: cada uno que borres te cuesta una vida.',
-     'El reloj ◷ activa <b>cámara lenta</b>. Depura los que pida el marcador para pasar.']},
+     'El reloj ◷ activa <b>cámara lenta</b>. Depura los que pida el marcador para pasar.'],
+     prog:{p:'Contaduría Pública',d:'Revisar y <b>depurar la información antes del cierre</b> —quitar lo que tiene errores, no tocar lo correcto— es control y auditoría contable.'}},
   3:{t:'FASE 3 · INTEGRAR',h:'Del formulario a la base',b:'Hay que llevar la información desde el formulario hasta la base de datos.',
      legend:[{i:'🟩',t:'TÚ'},{i:'★',t:'SELLO'},{i:'▲',t:'DRON',c:'red'}],steps:[
      '<b>Muévete:</b> botones ◀ ▶ (o ← → en computador).',
      '<b>Salta:</b> botón ⤴ (o Espacio / ↑). Salta encima de los drones para neutralizarlos.',
-     'Recoge los <b>3 sellos</b> ★: cada uno tiene una <b>columna de luz verde</b>, sube por las plataformas hasta él. Si caes al vacío pierdes un intento.']},
+     'Recoge los <b>3 sellos</b> ★: cada uno tiene una <b>columna de luz verde</b>, sube por las plataformas hasta él. Si caes al vacío pierdes un intento.'],
+     prog:{p:'Administración de Empresas',d:'Hacer que la información pase de un sistema a otro <b>sin re-digitar</b> es diseñar y gestionar procesos.'}},
   4:{t:'FASE 4 · EJECUTAR',h:'El núcleo del sistema',b:'Falta poner el sistema en marcha y recuperar sus núcleos.',
      legend:[{i:'🟢',t:'TÚ'},{i:'⬡',t:'NÚCLEO'},{i:'🔴',t:'GUARDIÁN',c:'red'}],steps:[
      '<b>Muévete:</b> arrastra sobre la pantalla o usa el <b>joystick</b>.',
      'Recoge los <b>3 núcleos</b> ⬡ y llega hasta la <b>SALIDA</b>.',
-     'El <b>guardián</b> rojo te persigue. Suelta un <b>señuelo</b> 🎯 para despistarlo.']}
+     'El <b>guardián</b> rojo te persigue. Suelta un <b>señuelo</b> 🎯 para despistarlo.'],
+     prog:{p:'Administración de Empresas',d:'Poner la operación a andar y <b>coordinar los recursos</b> para que el sistema funcione: dirección de la empresa.'}}
 };
 let briefResume=false;
 function showBrief(n,opts){
@@ -519,10 +529,11 @@ function showBrief(n,opts){
   briefResume=freeze;
   const leg = d.legend ? '<div style="margin:8px 0 2px;font-size:.72rem;color:#9fb3c4;letter-spacing:.02em">Qué es cada cosa: '+
     d.legend.map(g=>'<span style="white-space:nowrap;margin:0 4px"><span style="font-size:1rem;vertical-align:-2px">'+g.i+'</span> = <b style="color:'+(g.c?'var(--'+g.c+')':'#dbe7f2')+'">'+g.t+'</b></span>').join('<span style="opacity:.4"> · </span>')+'</div>' : '';
+  const prog = d.prog ? '<div class="brief-prog"><b>🎓 '+d.prog.p+'</b><br>En la vida real: '+d.prog.d+'</div>' : '';
   modal('<span class="badge">'+d.t+'</span><h2>'+d.h+'</h2><p style="margin-bottom:4px">'+d.b+'</p>'+leg+
     '<ol style="text-align:left;margin:6px 0 4px;padding-left:20px;line-height:1.45;color:#d6e4f0;font-size:.9rem">'+
-    d.steps.map(s=>'<li style="margin:5px 0">'+s+'</li>').join('')+'</ol>'+
-    '<button class="cta" onclick="closeBrief()">'+(opts.label||(freeze?'SEGUIR JUGANDO':'EMPEZAR'))+'</button>');
+    d.steps.map(s=>'<li style="margin:5px 0">'+s+'</li>').join('')+'</ol>'+prog+
+    '<button class="cta" onclick="closeBrief()" style="margin-top:6px">'+(opts.label||(freeze?'SEGUIR JUGANDO':'EMPEZAR'))+'</button>');
   $('#dialogBox').dataset.brief='1';
 }
 function closeBrief(){
@@ -1342,7 +1353,7 @@ async function runFlow(){
   imp.innerHTML='<b>Antes:</b> 2 personas · 40 min · se perdían pedidos el fin de semana.<br>'+
     '<b>Con el flujo:</b> 20 segundos · 24/7 · cero errores de digitación.<br>'+
     'Los cuatro fragmentos en orden: <b>'+keyFrag.join(' · ')+'</b> → tu promoción.<br>'+
-    '<span style="color:#9fb0e8">Diseñar y dirigir estos procesos es lo que hace hoy un Administrador de Empresas.</span>';
+    '<span style="color:#9fb0e8"><b style="color:var(--gold)">Contaduría Pública</b> hace que la información cuadre y sea confiable (conciliar, depurar, registrar). <b style="color:var(--gold)">Administración de Empresas</b> diseña y dirige el flujo para que todo funcione solo. Eso estudias en la Facultad de Ciencias Económicas y Administrativas.</span>';
   $('#dialogBox').appendChild(imp);
   setTimeout(()=>imp.classList.add('show'),40);
   setTimeout(finalWin,2400);
