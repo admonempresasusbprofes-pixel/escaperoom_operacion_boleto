@@ -388,9 +388,9 @@ let runStats={acc:null,tries:null,energy:null};
 function setMega(f){let m=$('#megaprog');if(m)m.firstElementChild.style.width=Math.max(0,Math.min(1,f))*100+'%'}
 
 const DIFF={
-  easy:{time:900,aimLives:4,aimNeed:5,guardSpeed:.8,guardCount:1,platLives:5},
-  normal:{time:720,aimLives:3,aimNeed:6,guardSpeed:.85,guardCount:2,platLives:4},
-  hard:{time:540,aimLives:2,aimNeed:7,guardSpeed:.95,guardCount:3,platLives:3}
+  easy:{time:900,aimLives:4,aimNeed:5,guardSpeed:.75,guardCount:1,platLives:5},
+  normal:{time:720,aimLives:3,aimNeed:6,guardSpeed:.85,guardCount:1,platLives:4},
+  hard:{time:540,aimLives:2,aimNeed:7,guardSpeed:.95,guardCount:2,platLives:3}
 };
 
 /* ===== Sonido (Web Audio, sin archivos externos) ===== */
@@ -715,7 +715,10 @@ function initAim(){
 }
 function makeTarget(w,h,sym){
   let kind=sym==='◷'?'slow':(sym==='◆'?'bad':'good'); /* bad = registro válido (no disparar) · good = error (a depurar) */
-  return{x:80+Math.random()*(w-160),y:130+Math.random()*(h-280),vx:(Math.random()-.5)*130,vy:(Math.random()-.5)*100,r:27+Math.random()*10,sym,kind,phase:Math.random()*6}
+  /* El margen vertical fijo (130) se pensó para un lienzo alto; en celular (bajo)
+     dejaba casi todos los objetivos amontonados en una franja angosta. */
+  let vm=Math.min(130,h*.28),vspan=Math.max(40,h-vm*2);
+  return{x:80+Math.random()*(w-160),y:vm+Math.random()*vspan,vx:(Math.random()-.5)*130,vy:(Math.random()-.5)*100,r:27+Math.random()*10,sym,kind,phase:Math.random()*6}
 }
 function spawnReplacement(w,h,forGood){
   if(Math.random()<0.14)return makeTarget(w,h,'◷');
@@ -735,8 +738,9 @@ function aimLoop(t){
   for(let y=0;y<r.height;y+=48){ax.beginPath();ax.moveTo(0,y);ax.lineTo(r.width,y);ax.stroke()}
   targets.forEach(q=>{
     q.x+=q.vx*mv;q.y+=q.vy*mv;
+    let vmB=Math.min(110,r.height*.24);
     if(q.x<35||q.x>r.width-35)q.vx*=-1;
-    if(q.y<110||q.y>r.height-110)q.vy*=-1;
+    if(q.y<vmB||q.y>r.height-vmB)q.vy*=-1;
     let pulse=Math.sin(t/180+q.phase)*4;
     let col=q.kind==='good'?'#ff4261':q.kind==='slow'?'#ffd15c':'#67f4b8';
     let fill=q.kind==='good'?'#3a1724':q.kind==='slow'?'#3a3411':'#123f3c';
@@ -1148,15 +1152,19 @@ function survLoop(t){
     let tdx=survTouchTarget.x-hero.x,tdy=survTouchTarget.y-hero.y,td=Math.hypot(tdx,tdy);
     if(td>12){dx=tdx;dy=tdy;l=td;}else{dx=dy=0;l=1;}
   }
+  /* Los márgenes verticales se pensaron para un lienzo alto (dejar espacio al panel de
+     misión y al botón señuelo); en celular el lienzo es bajo y ese margen fijo dejaba
+     una franja angostísima para moverse. Se limitan a una fracción de la altura real. */
+  let vMarginTop=Math.min(90,r.height*.2),vMarginBot=Math.min(95,r.height*.2);
   hero.x=Math.max(24,Math.min(r.width-24,hero.x+dx/l*190*dt));
-  hero.y=Math.max(90,Math.min(r.height-95,hero.y+dy/l*190*dt));
+  hero.y=Math.max(vMarginTop,Math.min(r.height-vMarginBot,hero.y+dy/l*190*dt));
   if(dx>0)hero.face=1;else if(dx<0)hero.face=-1;
   heroTrail.push({x:hero.x,y:hero.y});if(heroTrail.length>46)heroTrail.shift();
   let decoyActive=decoy&&t<decoy.until;if(decoy&&!decoyActive)decoy=null;
-  let lookahead=70;
+  let lookahead=40; /* menos predicción = los guardianes no acampan justo donde vas (p.ej. sobre un núcleo) */
   let aimX=decoyActive?decoy.x:hero.x+dx/l*lookahead,
       aimY=decoyActive?decoy.y:hero.y+dy/l*lookahead;
-  let guardSpeed=(58+(100-energy)*.7)*DIFF[difficulty].guardSpeed;
+  let guardSpeed=(50+(100-energy)*.45)*DIFF[difficulty].guardSpeed;
   let minDist=Infinity;
   guards.forEach(guard=>{
     let gx=aimX-guard.x,gy=aimY-guard.y,gl=Math.hypot(gx,gy)||1;
@@ -1165,13 +1173,13 @@ function survLoop(t){
     let d=Math.hypot(hero.x-guard.x,hero.y-guard.y);
     if(d<minDist)minDist=d;
   });
-  let proximityDrain=minDist<150?(150-minDist)/150*2.4:0;
-  energy=Math.max(0,energy-dt*(0.9+proximityDrain));
+  let proximityDrain=minDist<130?(130-minDist)/130*1.8:0;
+  energy=Math.max(0,energy-dt*(0.55+proximityDrain));
   let dv=$('#dangerVignette');
   if(minDist<115){dv.classList.add('on');if(t-lastDangerBeep>450){sfx('danger');lastDangerBeep=t}}
   else dv.classList.remove('on');
   cores.forEach(c=>{
-    if(!c.t&&Math.hypot(hero.x-c.x,hero.y-c.y)<35){
+    if(!c.t&&Math.hypot(hero.x-c.x,hero.y-c.y)<42){
       c.t=true;score+=100;energy=Math.min(100,energy+22);sfx('core');
       feedback('NÚCLEO RECUPERADO +100');hud();
     }
