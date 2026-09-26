@@ -262,11 +262,26 @@ html,body{background:#071446}body:before{background:radial-gradient(circle at 50
 /* flecha entre casillas del flujo final → se lee como secuencia */
 .flow-slot:not(:last-of-type):after{content:"→";position:absolute;right:-11px;top:50%;transform:translateY(-50%);color:#7d8dc7;font-weight:900;font-size:.9rem;z-index:2}
 .flow-slot.start-hint{border-color:var(--gold);box-shadow:0 0 0 2px #ffbf3f55}
+/* Tarjeta de instrucciones (brief) — selector ".modal .brief-*" para ganarle en
+   especificidad a las reglas genéricas ".modal h2"/".modal p" de otros bloques */
+.modal .brief-h2{font-size:clamp(1.3rem,4vw,1.9rem);margin:6px 0 4px}
+.modal .brief-body{margin:0 0 4px;font-size:.85rem}
+.brief-legend{text-align:left;margin:6px 0 2px;font-size:.72rem;color:#9fb3c4;letter-spacing:.02em}
+.brief-steps{text-align:left;margin:6px 0 4px;padding-left:20px;line-height:1.42;color:#d6e4f0;font-size:.85rem}
+.brief-steps li{margin:5px 0}
 /* Nota de carrera en las tarjetas de instrucciones */
 .brief-prog{text-align:left;margin:8px 0 2px;padding:8px 11px;border-left:3px solid var(--gold);background:#ffd15c12;border-radius:0 9px 9px 0;font-size:.78rem;color:#cfe0ee;line-height:1.42}
 .brief-prog b{color:var(--gold);letter-spacing:.01em}
 @media (orientation:landscape) and (max-height:600px), (orientation:landscape) and (pointer:coarse) and (max-height:1200px){
-  .brief-prog{margin:5px 0 1px;padding:5px 9px;font-size:.62rem;line-height:1.3}
+  .modal{padding:11px 16px}
+  .badge{padding:4px 8px;font-size:.54rem}
+  .modal .brief-h2{font-size:1.05rem;margin:3px 0 2px}
+  .modal .brief-body{font-size:.66rem;line-height:1.26;margin:0 0 3px}
+  .brief-legend{font-size:.6rem;margin:4px 0 1px}
+  .brief-steps{font-size:.66rem;line-height:1.28;margin:4px 0 3px;padding-left:16px}
+  .brief-steps li{margin:3px 0}
+  .brief-prog{margin:4px 0 1px;padding:5px 9px;font-size:.6rem;line-height:1.26}
+  #dialogBox .cta{padding:8px 16px;font-size:.78rem;margin-top:4px!important}
 }
 /* Puerta final compacta en horizontal (debe caber sin scroll) — va DESPUÉS de las
    reglas base de .flow-* para ganar por orden de cascada */
@@ -527,12 +542,12 @@ function showBrief(n,opts){
   const freeze = ('freeze' in opts) ? opts.freeze : (!paused&&(gameActive||current===1));
   if(freeze&&!paused){paused=true;clearInterval(timer);}
   briefResume=freeze;
-  const leg = d.legend ? '<div style="margin:8px 0 2px;font-size:.72rem;color:#9fb3c4;letter-spacing:.02em">Qué es cada cosa: '+
+  const leg = d.legend ? '<div class="brief-legend">Qué es cada cosa: '+
     d.legend.map(g=>'<span style="white-space:nowrap;margin:0 4px"><span style="font-size:1rem;vertical-align:-2px">'+g.i+'</span> = <b style="color:'+(g.c?'var(--'+g.c+')':'#dbe7f2')+'">'+g.t+'</b></span>').join('<span style="opacity:.4"> · </span>')+'</div>' : '';
   const prog = d.prog ? '<div class="brief-prog"><b>🎓 '+d.prog.p+'</b><br>En la vida real: '+d.prog.d+'</div>' : '';
-  modal('<span class="badge">'+d.t+'</span><h2>'+d.h+'</h2><p style="margin-bottom:4px">'+d.b+'</p>'+leg+
-    '<ol style="text-align:left;margin:6px 0 4px;padding-left:20px;line-height:1.45;color:#d6e4f0;font-size:.9rem">'+
-    d.steps.map(s=>'<li style="margin:5px 0">'+s+'</li>').join('')+'</ol>'+prog+
+  modal('<span class="badge">'+d.t+'</span><h2 class="brief-h2">'+d.h+'</h2><p class="brief-body">'+d.b+'</p>'+leg+
+    '<ol class="brief-steps">'+
+    d.steps.map(s=>'<li>'+s+'</li>').join('')+'</ol>'+prog+
     '<button class="cta" onclick="closeBrief()" style="margin-top:6px">'+(opts.label||(freeze?'SEGUIR JUGANDO':'EMPEZAR'))+'</button>');
   $('#dialogBox').dataset.brief='1';
 }
@@ -840,9 +855,15 @@ function sceneWipe(mid,after){
 function initPlatformer(){
   let r=resizeCanvas(pc,px);
   let H=r.height,gy=H-64,hh=36;
+  /* En celular el área de juego es más baja que en escritorio: si la escalera se
+     diseñó para una pantalla alta, los sellos quedan por encima del canvas y no se
+     ven. vFit comprime las alturas (nunca las estira) para que todo quepa visible
+     sin volver los saltos más difíciles (los huecos se hacen iguales o más chicos). */
+  let vFit=Math.min(1,gy/309);
+  let vy=n=>gy-n*vFit;
   platLives=DIFF[difficulty].platLives;
   plat={
-    H:H,gy:gy,camX:0,jumpPrev:false,win:false,warned:0,cpTaken:false,
+    H:H,gy:gy,vFit:vFit,camX:0,jumpPrev:false,win:false,warned:0,cpTaken:false,
     hero:{x:60,y:gy-hh-2,w:26,h:hh,vx:0,vy:0,onGround:false,coyote:0,face:1,inv:0},
     spawn:{x:60,y:gy-hh-2},checkpoint:{x:1400,y:gy-hh-2},
     ground:[
@@ -853,22 +874,22 @@ function initPlatformer(){
     ],
     plats:[
       /* escalera al sello 1 (sobre el primer pozo) */
-      {x:470,y:gy-95,w:130,h:16},
-      {x:610,y:gy-185,w:140,h:16},
+      {x:470,y:vy(95),w:130,h:16},
+      {x:610,y:vy(185),w:140,h:16},
       /* puente + escalera al sello 2 (cruce del pozo grande) */
-      {x:1130,y:gy-72,w:180,h:16},
-      {x:1310,y:gy-158,w:150,h:16},
+      {x:1130,y:vy(72),w:180,h:16},
+      {x:1310,y:vy(158),w:150,h:16},
       /* escalera al sello 3 (antes de la puerta) */
-      {x:2350,y:gy-95,w:130,h:16},
-      {x:2470,y:gy-180,w:150,h:16},
+      {x:2350,y:vy(95),w:130,h:16},
+      {x:2470,y:vy(180),w:150,h:16},
       /* plataformas opcionales con monedas */
-      {x:1700,y:gy-120,w:120,h:16},
-      {x:2010,y:gy-110,w:120,h:16}
+      {x:1700,y:vy(120),w:120,h:16},
+      {x:2010,y:vy(110),w:120,h:16}
     ],
     seals:[
-      {x:675,y:gy-215,got:false,name:'Validación'},
-      {x:1385,y:gy-190,got:false,name:'Transformación'},
-      {x:2545,y:gy-212,got:false,name:'Conexión'}
+      {x:675,y:vy(215),got:false,name:'Validación'},
+      {x:1385,y:vy(190),got:false,name:'Transformación'},
+      {x:2545,y:vy(212),got:false,name:'Conexión'}
     ],
     coins:[],
     foes:[
@@ -877,7 +898,7 @@ function initPlatformer(){
       {x:1650,y:gy-15,minx:1430,maxx:1930,dir:-1,r:15,dead:false},
       {x:2350,y:gy-15,minx:2170,maxx:2560,dir:1,r:15,dead:false}
     ],
-    door:{x:3210,y:gy-100,w:52,h:100}
+    door:{x:3210,y:vy(100),w:52,h:100}
   };
   plat.plats.forEach((p,i)=>{if(i%2===0)plat.coins.push({x:p.x+p.w/2,y:p.y-26,got:false})});
   for(let cx=240;cx<3120;cx+=300)plat.coins.push({x:cx,y:gy-30,got:false});
@@ -986,14 +1007,14 @@ function drawPlat(){
   plat.plats.forEach(s=>{px.fillStyle='#28407e';px.fillRect(s.x,s.y,s.w,s.h);px.fillStyle='#7fd6ff';px.fillRect(s.x,s.y,s.w,3)});
   let d=plat.door,ready=plat.seals.every(s=>s.got);
   /* Estación de origen: SISTEMA 1 · FORMULARIO */
-  var g1=plat.gy;
-  px.fillStyle='#122b5e';px.fillRect(10,g1-96,74,96);
-  px.strokeStyle='#7fd6ff';px.lineWidth=2;px.strokeRect(10,g1-96,74,96);
+  var g1=plat.gy,vf1=plat.vFit||1,vy1=n=>g1-n*vf1,boxH=96*vf1;
+  px.fillStyle='#122b5e';px.fillRect(10,vy1(96),74,boxH);
+  px.strokeStyle='#7fd6ff';px.lineWidth=2;px.strokeRect(10,vy1(96),74,boxH);
   px.fillStyle='#7fd6ff';px.font='800 9px system-ui';px.textAlign='center';
-  px.fillText('SISTEMA 1',47,g1-78);px.fillStyle='#dfe4ff';px.fillText('FORMULARIO',47,g1-66);
-  px.fillStyle='#0e1f47';px.fillRect(20,g1-56,54,40);
-  px.strokeStyle='#3a5aa0';px.strokeRect(20,g1-56,54,40);
-  px.strokeStyle='#7fd6ff';for(let ly=0;ly<3;ly++){px.beginPath();px.moveTo(26,g1-46+ly*10);px.lineTo(68,g1-46+ly*10);px.stroke()}
+  px.fillText('SISTEMA 1',47,vy1(78));px.fillStyle='#dfe4ff';px.fillText('FORMULARIO',47,vy1(66));
+  px.fillStyle='#0e1f47';px.fillRect(20,vy1(56),54,40*vf1);
+  px.strokeStyle='#3a5aa0';px.strokeRect(20,vy1(56),54,40*vf1);
+  px.strokeStyle='#7fd6ff';for(let ly=0;ly<3;ly++){px.beginPath();px.moveTo(26,vy1(46-ly*10));px.lineTo(68,vy1(46-ly*10));px.stroke()}
   /* Estación de destino: SISTEMA 2 · BASE DE DATOS (rodea la puerta) */
   px.fillStyle='#0c2a24';px.fillRect(d.x-26,d.y-14,d.w+52,d.h+14);
   px.strokeStyle='#67f4b8';px.lineWidth=2;px.strokeRect(d.x-26,d.y-14,d.w+52,d.h+14);
